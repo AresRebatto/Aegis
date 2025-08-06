@@ -1,9 +1,9 @@
 use argon2::{password_hash, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use aes_gcm::{Aes256Gcm, Key, KeyInit};
 use hkdf::Hkdf;
-use rand::{rngs::OsRng, RngCore};
+use rand::{rngs::OsRng};
 use sha2::Sha256;
-use password_hash::{Salt, SaltString};
+use password_hash::{SaltString};
 use super::super::errors::auth::{LoginError};
 
 //for local use
@@ -15,22 +15,22 @@ pub struct DeriveCredentials{
 
 impl DeriveCredentials{
     pub fn new(master_pwd: &str)-> Result<Self,LoginError>{
-        let mut salt = SaltString::generate(&mut OsRng);
+        if master_pwd == ""{return Err(LoginError::EmptyPassword);}
 
-        
-        let argon2 = Argon2::default();
+        let salt = SaltString::generate(&mut OsRng);
+
 
         let pwd_hash = Self::hash_password(&salt, master_pwd)
                         .map_err(|_|LoginError::HashingError)?;
     
-        let enctyption_key: [u8; 32] = Self::generate_key(master_pwd, &salt)
+        let encryption_key: [u8; 32] = Self::generate_key(master_pwd, &salt)
                                             .map_err(|_| LoginError::GeneratingEnryptionKeyError)?;
         
         
         
         Ok(Self{
             password_hash: pwd_hash,
-            encryption_key: enctyption_key,
+            encryption_key: encryption_key,
             salt: salt.to_string()
         })
     }

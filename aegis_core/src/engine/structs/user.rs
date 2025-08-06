@@ -14,7 +14,7 @@ pub struct User{
     pub id: i32,
     pub name: String,
     pub pwd: String, //hash
-    pub salt: [u8; 32] //usefull for a master password
+    pub salt: String //usefull for a master password
 }
 
 impl User{
@@ -42,13 +42,35 @@ impl User{
         
     }
 
-    pub fn login_new_user(name: String, pwd: String)-> Result<(), LoginError>{
-        DeriveCredentials::new(&pwd);
-        todo!()
+    pub fn login_new_user(users: &mut Vec<User>, name: String, pwd: String)-> Result<DeriveCredentials, LoginError>{
+        if users.iter().any(|u| u.name == name){
+            return Err(LoginError::UserAlreadyExists);
+        }
+        match DeriveCredentials::new(&pwd){
+            Ok(derive_credentials)=>{
+
+                users.push(
+                    User { 
+                        id: (users.len()+1) as i32, 
+                        name: name, 
+                        pwd: derive_credentials.password_hash.clone(), 
+                        salt: derive_credentials.salt.clone() 
+                    }
+                );
+
+                
+                // TODO: Insert new user in json file
+
+
+
+                return Ok(derive_credentials);
+            },
+            Err(e)=>{return Err(e);}
+        }
         
     }
 
-    pub fn login_user(name: String, pwd: String)-> Result<Vec<Login>, LoginError>{
+    pub fn login_user(users: &[User], name: String, pwd: String)-> Result<Vec<Login>, LoginError>{
         todo!()
     }
 }
