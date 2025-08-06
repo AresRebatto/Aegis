@@ -20,23 +20,22 @@ impl DeriveCredentials{
         
         let argon2 = Argon2::default();
 
-        let pwd_hash = Self::hash_password(salt, master_pwd)
+        let pwd_hash = Self::hash_password(&salt, master_pwd)
                         .map_err(|_|LoginError::HashingError)?;
     
-        let enctyption_key: [u8; 32];
+        let enctyption_key: [u8; 32] = Self::generate_key(master_pwd, &salt)
+                                            .map_err(|_| LoginError::GeneratingEnryptionKeyError)?;
         
         
         
-        /*Ok(Self{
+        Ok(Self{
             password_hash: pwd_hash,
             encryption_key: enctyption_key,
             salt: salt.to_string()
-        });*/
-
-        todo!()
+        })
     }
 
-    fn hash_password(salt: SaltString, master_pwd: &str)-> Result<String, ()>{
+    fn hash_password(salt: &SaltString, master_pwd: &str)-> Result<String, ()>{
         let argon2 = Argon2::default();
         match argon2
                 .hash_password(master_pwd.as_bytes(), salt.as_salt()){
@@ -46,7 +45,21 @@ impl DeriveCredentials{
                         
     }
 
-    fn generate_key(master_pwd: &str, salt: SaltString)-> Result<[u8; 32], ()>{
-        todo!()
+    fn generate_key(master_pwd: &str, salt: &SaltString)-> Result<[u8; 32], ()>{
+        
+        let salt_bytes = salt.as_str().as_bytes();
+
+        let hkdf = Hkdf::<Sha256>::new(Some(salt_bytes), master_pwd.as_bytes());
+
+        let mut encription_key= [0u8; 32];
+
+
+        if let Err(_) = hkdf.expand(b"encryption-key-v1", &mut encription_key){
+            return Err(());
+        }
+            
+        
+        Ok(encription_key)
+
     }
 }

@@ -1,14 +1,13 @@
 use std::{ fs::{self, create_dir, File}, path::Path};
 use serde::{Serialize, Deserialize};
-use super::super::errors::auth::{LoginError};
 use argon2::{Argon2, PasswordHasher, PasswordVerifier, PasswordHash};
 use aes_gcm::{Aes256Gcm, Key, KeyInit};
-use hkdf::Hkdf;
-use rand::{rngs::OsRng, RngCore};
-use sha2::Sha256;
-use zeroize::{Zeroize, ZeroizeOnDrop};
 use std::fmt;
-use super::login::Login;
+use super::{
+    login::Login, 
+    super::errors::auth::LoginError, 
+    derive_credentials::DeriveCredentials
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct User{
@@ -44,8 +43,9 @@ impl User{
     }
 
     pub fn login_new_user(name: String, pwd: String)-> Result<(), LoginError>{
-
+        DeriveCredentials::new(&pwd);
         todo!()
+        
     }
 
     pub fn login_user(name: String, pwd: String)-> Result<Vec<Login>, LoginError>{
