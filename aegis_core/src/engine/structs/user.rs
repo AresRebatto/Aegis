@@ -42,7 +42,7 @@ impl User{
         
     }
 
-    pub fn login_new_user(users: &mut Vec<User>, name: String, pwd: String)-> Result<DeriveCredentials, LoginError>{
+    pub fn create_new_user(users: &mut Vec<User>, name: String, pwd: String)-> Result<DeriveCredentials, LoginError>{
         if users.iter().any(|u| u.name == name){
             return Err(LoginError::UserAlreadyExists);
         }
@@ -58,9 +58,18 @@ impl User{
                     }
                 );
 
+                let serialized_users: String = serde_json::to_string(&users)
+                                                .map_err(|_| LoginError::UserDataSerializzation)?;
+                let path = Path::new("data/users.json");
+                if Path::exists(&path){
+                    fs::write(path, serialized_users)
+                        .map_err(|_|LoginError::ImpossibleWriteFile)?;
+                                     
+                }else{
+                    fs::File::create("data/users.json")
+                        .map_err(|_|LoginError::ImpossibileCreateUserFile)?;
+                }
                 
-                // TODO: Insert new user in json file
-
 
 
                 return Ok(derive_credentials);

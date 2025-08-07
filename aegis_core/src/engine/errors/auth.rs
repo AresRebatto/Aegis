@@ -5,5 +5,8 @@ pub enum LoginError{
     GeneratingEnryptionKeyError,
     WrongPassword,
     EmptyPassword,
+    UserDataSerializzation,
+    ImpossibleWriteFile,
+    ImpossibileCreateUserFile,
     UnknownError(String)
 }
