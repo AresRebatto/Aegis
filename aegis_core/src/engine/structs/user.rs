@@ -1,4 +1,4 @@
-use std::{ fs::{self, create_dir, File}, path::Path};
+use std::{ fs::{self, create_dir, File}, io::Read, path::Path};
 use serde::{Serialize, Deserialize};
 use argon2::{Argon2, PasswordHasher, PasswordVerifier, PasswordHash};
 use aes_gcm::{Aes256Gcm, Key, KeyInit};
@@ -52,7 +52,7 @@ impl User{
                 users.push(
                     User { 
                         id: (users.len()+1) as i32, 
-                        name: name, 
+                        name: name.clone(), 
                         pwd: derive_credentials.password_hash.clone(), 
                         salt: derive_credentials.salt.clone() 
                     }
@@ -65,10 +65,10 @@ impl User{
                     fs::write(path, serialized_users)
                         .map_err(|_|LoginError::ImpossibleWriteFile)?;
                                      
-                }else{
-                    fs::File::create("data/users.json")
-                        .map_err(|_|LoginError::ImpossibileCreateUserFile)?;
                 }
+
+                fs::File::create(format!("data/{}.json", name))
+                    .map_err(|_|LoginError::ImpossibileCreateUserFile)?;
                 
 
 
@@ -80,6 +80,20 @@ impl User{
     }
 
     pub fn login_user(users: &[User], name: String, pwd: String)-> Result<Vec<Login>, LoginError>{
+        let derive_credential = DeriveCredentials::new(&pwd).unwrap();
+
+        if !users.iter().any(|u| 
+                                u.pwd == derive_credential.password_hash && 
+                                u.name == name
+                            ){
+            return Err(LoginError::WrongPassword);
+        }
+
+        let mut user_file: File = fs::File::open(format!("data/{}.json", &name))
+                                    .map_err(|_| LoginError::ImpossibleOpenUserFile)?;
+        
+
+
         todo!()
     }
 }

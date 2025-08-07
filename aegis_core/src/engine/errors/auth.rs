@@ -8,5 +8,6 @@ pub enum LoginError{
     UserDataSerializzation,
     ImpossibleWriteFile,
     ImpossibileCreateUserFile,
+    ImpossibleOpenUserFile,
     UnknownError(String)
 }

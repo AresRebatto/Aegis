@@ -1,10 +1,14 @@
 use argon2::{password_hash, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
-use aes_gcm::{Aes256Gcm, Key, KeyInit};
+use aes_gcm::{aead::AeadMutInPlace, Aes256Gcm, Key, KeyInit, Nonce};
 use hkdf::Hkdf;
-use rand::{rngs::OsRng};
-use sha2::Sha256;
+use rand::{rngs::OsRng, RngCore};
+use sha2::{digest::block_buffer::Eager, Sha256};
 use password_hash::{SaltString};
-use super::super::errors::auth::{LoginError};
+use super::super::errors::{
+    auth::{LoginError},
+    cryptograpy_errors::CryptographyError
+
+};
 
 //for local use
 pub struct DeriveCredentials{
@@ -61,5 +65,32 @@ impl DeriveCredentials{
         
         Ok(encription_key)
 
+    }
+
+    fn create_chiper(encryption_key: &[u8; 32])-> Aes256Gcm{
+
+        let key = Key::<Aes256Gcm>::from_slice(encryption_key);
+
+        Aes256Gcm::new(key)
+    }
+                                                                            
+    pub fn encrypt_text(
+        encryption_key: &[u8; 32], 
+        plain_text: &str
+            // encr text  nonce
+    )-> Result<(Vec<u8>, Vec<u8>),CryptographyError>{
+        let mut chiper = Self::create_chiper(encryption_key);
+
+        let mut nonce_bytes = [0u8; 12];
+        OsRng.fill_bytes(&mut nonce_bytes);
+        let nonce = Nonce::from_slice(&nonce_bytes);
+
+
+        let mut buffer = plain_text.as_bytes().to_vec();
+
+        chiper.encrypt_in_place(nonce, b"", &mut buffer)
+            .map_err(|_| CryptographyError::EncryptionError)?;
+        
+        Ok((buffer, nonce_bytes.to_vec()))
     }
 }

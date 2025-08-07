@@ -1,5 +1,7 @@
+
+//for eveery field there's a nonce
 pub struct Login{
-    email: Option<String>,
-    username: Option<String>,
-    pwd: String
+    email: (Option<String>, [u8; 12]),
+    username: (Option<String>, [u8; 12]),
+    pwd: (String, [u8; 12])
 }
